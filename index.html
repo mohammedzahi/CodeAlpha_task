@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Legend Flashcard Quiz</title>
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600&family=Montserrat:wght@700&display=swap" rel="stylesheet">
+    <style>
+        /* Basic Styling */
+        :root {
+            /* Updated and expanded color palette */
+            --bg-color-light: #e0f7fa; /* Light cyan for softer background */
+            --bg-color-dark: #b2ebf2;  /* Slightly darker cyan for gradient */
+            --card-bg: #ffffff;
+            --text-color: #263238; /* Darker text for better contrast */
+
+            /* More vibrant button colors */
+            --primary-btn-start: #66bb6a; /* Lighter green for gradient start */
+            --primary-btn-end: #388e3c;   /* Darker green for gradient end */
+            --primary-btn-hover: #43a047;
+
+            --secondary-btn-start: #42a5f5; /* Lighter blue for gradient start */
+            --secondary-btn-end: #1976d2;   /* Darker blue for gradient end */
+            --secondary-btn-hover: #1e88e5;
+
+            --accent-color-start: #ffeb3b; /* Lighter amber for gradient start */
+            --accent-color-end: #fbc02d;   /* Darker amber for gradient end */
+            --accent-color-hover: #fdd835;
+            --accent-text-color: #333; /* Dark text for amber button */
+
+            --delete-btn-start: #ef5350; /* Lighter red for gradient start */
+            --delete-btn-end: #d32f2f;   /* Darker red for gradient end */
+            --delete-btn-hover: #c62828;
+
+            --border-radius: 12px; /* Slightly more rounded */
+            --shadow-light: 0 6px 15px rgba(0, 0, 0, 0.15); /* More prominent shadow */
+            --shadow-neumorphic-light: #ffffff;
+            --shadow-neumorphic-dark: #a3b1c6;
+
+            /* Splash screen specific colors */
+            --splash-bg: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%); /* Deep purple to blue gradient */
+            --splash-text-color: #ffffff;
+            --splash-btn-bg: #FFD700; /* Gold color for splash button */
+            --splash-btn-text: #333; /* Dark text for gold button */
+            --splash-btn-hover: #FFC400;
+        }
+
+        body {
+            font-family: 'Open Sans', sans-serif;
+            background: linear-gradient(135deg, var(--bg-color-light) 0%, var(--bg-color-dark) 100%); /* Vibrant gradient background */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            color: var(--text-color);
+            overflow: hidden; /* Hide overflow during splash screen */
+        }
+
+        /* Splash Screen Styles */
+        #splash-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--splash-bg);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999; /* Ensure it's on top */
+            color: var(--splash-text-color);
+            font-family: 'Montserrat', sans-serif;
+            font-size: 3.5em;
+            text-shadow: 2px 2px 5px rgba(0,0,0,0.3);
+            opacity: 1;
+            transition: opacity 1s ease-out; /* Fade out transition */
+        }
+
+        #splash-screen.fade-out {
+            opacity: 0;
+            pointer-events: none; /* Make it unclickable after fading */
+        }
+
+        #splash-screen h1 {
+            color: var(--splash-text-color);
+            font-size: 1.2em; /* Adjust size relative to splash screen font-size */
+            margin-bottom: 30px;
+        }
+
+        #lets-begin-btn {
+            background-color: var(--splash-btn-bg);
+            color: var(--splash-btn-text);
+            padding: 15px 30px;
+            font-size: 0.6em; /* Relative to splash screen font-size */
+            border: none;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            transition: background-color 0.3s ease, transform 0.2s ease;
+        }
+
+        #lets-begin-btn:hover {
+            background-color: var(--splash-btn-hover);
+            transform: translateY(-2px);
+        }
+        #lets-begin-btn:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+
+        /* Main content container, initially hidden */
+        .main-content-wrapper {
+            opacity: 0;
+            transition: opacity 1s ease-in;
+            width: 100%;
+            max-width: 550px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .main-content-wrapper.active {
+            opacity: 1;
+        }
+
+
+        .container {
+            background-color: var(--bg-color-light); /* Use light background color */
+            padding: 30px;
+            border-radius: var(--border-radius);
+            /* Enhanced neumorphic effect */
+            box-shadow: 8px 8px 16px var(--shadow-neumorphic-dark),
+                        -8px -8px 16px var(--shadow-neumorphic-light);
+            width: 100%;
+            max-width: 550px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            color: var(--text-color); /* Keep main heading dark */
+            margin-bottom: 25px;
+            font-size: 2.5em; /* Slightly larger heading */
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+        }
+
+        .flashcard-display {
+            perspective: 1000px;
+            width: 100%;
+            min-height: 220px; /* Ensure card has enough height */
+            margin-bottom: 25px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .flashcard {
+            width: 90%;
+            height: 100%;
+            min-height: 200px; /* Increased min-height for card */
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.6s;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-light); /* Use enhanced shadow */
+            background-color: var(--card-bg);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            text-align: center;
+            border-radius: var(--border-radius);
+            word-wrap: break-word;
+            overflow-y: auto;
+        }
+
+        .card-face p {
+            font-size: 1.6em; /* Increased font size for questions/answers */
+            font-weight: 600;
+            line-height: 1.4;
+            max-height: 160px; /* Increased max height for text */
+            overflow-y: auto;
+        }
+
+        .card-front {
+            background-color: var(--card-bg);
+            color: var(--text-color);
+        }
+
+        .card-back {
+            background-color: var(--secondary-btn-end); /* Use the darker end color for solid back */
+            color: white;
+            transform: rotateY(180deg);
+        }
+
+        .flashcard.flipped {
+            transform: rotateY(180deg);
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        button {
+            padding: 12px 22px;
+            border: none;
+            border-radius: var(--border-radius);
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.2s ease, background 0.3s ease; /* Add background to transition */
+            /* Neumorphic button shadow */
+            box-shadow: 6px 6px 12px var(--shadow-neumorphic-dark),
+                        -6px -6px 12px var(--shadow-neumorphic-light);
+        }
+
+        button:active {
+            /* Pressed neumorphic effect */
+            box-shadow: inset 3px 3px 7px var(--shadow-neumorphic-dark),
+                        inset -3px -3px 7px var(--shadow-neumorphic-light);
+            transform: translateY(1px);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-btn-start), var(--primary-btn-end));
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-btn-hover); /* Solid color on hover for simplicity */
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, var(--secondary-btn-start), var(--secondary-btn-end));
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: var(--secondary-btn-hover);
+        }
+
+        .btn-accent {
+            background: linear-gradient(135deg, var(--accent-color-start), var(--accent-color-end));
+            color: var(--accent-text-color); /* Text color for accent button */
+        }
+
+        .btn-accent:hover {
+            background: var(--accent-color-hover);
+        }
+
+        .btn-delete { /* Specific class for delete button */
+            background: linear-gradient(135deg, var(--delete-btn-start), var(--delete-btn-end));
+            color: white;
+        }
+        .btn-delete:hover {
+            background: var(--delete-btn-hover);
+        }
+
+
+        .btn-disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+            box-shadow: none;
+            color: #666;
+            background-image: none; /* Remove gradient for disabled state */
+        }
+        .btn-disabled:hover {
+            background-color: #ccc;
+            transform: none;
+        }
+
+
+        .card-counter {
+            font-size: 1em;
+            color: var(--text-color);
+            margin-top: 10px;
+            font-weight: 600;
+        }
+
+        /* Add Card Section */
+        .add-card-section {
+            background-color: var(--card-bg);
+            padding: 25px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-light);
+            width: 100%;
+            max-width: 550px;
+            margin-top: 20px;
+            text-align: left;
+        }
+
+        .add-card-section h2 {
+            font-size: 1.8em; /* Larger heading for add section */
+            color: var(--primary-btn-end); /* Use a darker primary shade for heading */
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--text-color);
+        }
+
+        .form-group input[type="text"],
+        .form-group textarea {
+            width: calc(100% - 20px);
+            padding: 12px; /* Slightly more padding */
+            border: none; /* Remove default border */
+            border-radius: 8px; /* Slightly less rounded for inputs */
+            font-family: 'Open Sans', sans-serif;
+            font-size: 1em;
+            background-color: var(--bg-color-light); /* Light background for inputs */
+            box-shadow: inset 3px 3px 7px var(--shadow-neumorphic-dark),
+                        inset -3px -3px 7px var(--shadow-neumorphic-light); /* Neumorphic input */
+            color: var(--text-color);
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px; /* Increased min-height for textarea */
+        }
+
+        .add-card-section .btn-primary {
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .message {
+            font-size: 0.95em;
+            margin-top: 10px;
+            padding: 8px;
+            border-radius: 5px;
+            text-align: center;
+            display: none;
+            font-weight: 600;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 600px) {
+            .container, .add-card-section {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 2em;
+            }
+
+            .flashcard {
+                min-height: 180px;
+            }
+
+            .card-face p {
+                font-size: 1.4em;
+            }
+
+            .controls {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            button {
+                width: 100%;
+            }
+
+            #splash-screen {
+                font-size: 2.5em;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Splash Screen -->
+    <div id="splash-screen">
+        <h1>Legend Flashcard Quiz</h1>
+        <button id="lets-begin-btn">Let's Begin</button>
+    </div>
+
+    <!-- Main content wrapper, initially hidden -->
+    <div class="main-content-wrapper" id="main-content-wrapper">
+        <div class="container">
+            <h1>Legend Flashcard Quiz</h1>
+
+            <div class="flashcard-display">
+                <div id="flashcard" class="flashcard">
+                    <div id="card-front" class="card-face card-front">
+                        <p id="question-text">No flashcards yet! Add one below.</p>
+                    </div>
+                    <div id="card-back" class="card-face card-back hidden">
+                        <p id="answer-text"></p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="controls">
+                <button id="show-answer-btn" class="btn-secondary">Show Answer</button>
+                <button id="prev-card-btn" class="btn-primary">&laquo; Previous</button>
+                <button id="next-card-btn" class="btn-primary">Next &raquo;</button>
+                <button id="new-card-quick-add-btn" class="btn-accent">New Card</button> <!-- New button added here -->
+            </div>
+            <div class="card-counter">
+                Card <span id="current-card-num">0</span> of <span id="total-cards-num">0</span>
+            </div>
+        </div>
+
+        <div class="add-card-section">
+            <h2>Add New Flashcard</h2>
+            <div class="form-group">
+                <label for="new-question">Question:</label>
+                <input type="text" id="new-question" placeholder="Enter question here...">
+            </div>
+            <div class="form-group">
+                <label for="new-answer">Answer:</label>
+                <textarea id="new-answer" placeholder="Enter answer here..."></textarea>
+            </div>
+            <p id="add-message" class="message">Please fill in both fields.</p>
+            <button id="add-card-btn" class="btn-primary">Add Card</button>
+            <button id="delete-current-card-btn" class="btn-delete" style="margin-top: 15px;">Delete Current Card</button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- DOM Elements ---
+            const splashScreen = document.getElementById('splash-screen');
+            const letsBeginBtn = document.getElementById('lets-begin-btn');
+            const mainContentWrapper = document.getElementById('main-content-wrapper');
+
+            const flashcard = document.getElementById('flashcard');
+            const questionText = document.getElementById('question-text');
+            const answerText = document.getElementById('answer-text');
+            const showAnswerBtn = document.getElementById('show-answer-btn');
+            const prevCardBtn = document.getElementById('prev-card-btn');
+            const nextCardBtn = document.getElementById('next-card-btn');
+            const newCardQuickAddBtn = document.getElementById('new-card-quick-add-btn'); // New button element
+            const currentCardNumSpan = document.getElementById('current-card-num');
+            const totalCardsNumSpan = document.getElementById('total-cards-num');
+
+            const newQuestionInput = document.getElementById('new-question');
+            const newAnswerInput = document.getElementById('new-answer'); // Corrected typo here
+            const addCardBtn = document.getElementById('add-card-btn');
+            const deleteCurrentCardBtn = document.getElementById('delete-current-card-btn');
+            const addMessage = document.getElementById('add-message');
+
+            // --- Data Storage ---
+            let flashcards = [];
+            let currentCardIndex = 0;
+            const STORAGE_KEY = 'simpleFlashcards';
+
+            // --- Colors for messages (defined as JS variables) ---
+            const rootStyles = getComputedStyle(document.documentElement);
+            const successColor = rootStyles.getPropertyValue('--primary-btn-end').trim();
+            const errorColor = rootStyles.getPropertyValue('--delete-btn-end').trim();
+
+
+            // --- Functions ---
+
+            /**
+             * Handles the transition from splash screen to main content.
+             */
+            function showMainContent() {
+                splashScreen.classList.add('fade-out');
+                splashScreen.addEventListener('transitionend', () => {
+                    splashScreen.style.display = 'none';
+                    mainContentWrapper.classList.add('active');
+                    document.body.style.overflow = 'auto';
+                }, { once: true });
+            }
+
+            /**
+             * Loads flashcards from Local Storage.
+             */
+            function loadFlashcards() {
+                const storedFlashcards = localStorage.getItem(STORAGE_KEY);
+                if (storedFlashcards) {
+                    flashcards = JSON.parse(storedFlashcards);
+                }
+                if (flashcards.length > 0) {
+                    currentCardIndex = Math.max(0, Math.min(currentCardIndex, flashcards.length - 1));
+                } else {
+                    currentCardIndex = 0;
+                }
+                displayFlashcard();
+                updateControls();
+            }
+
+            /**
+             * Saves flashcards to Local Storage.
+             */
+            function saveFlashcards() {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(flashcards));
+            }
+
+            /**
+             * Displays the current flashcard.
+             */
+            function displayFlashcard() {
+                if (flashcards.length === 0) {
+                    questionText.textContent = "No flashcards yet! Add one below.";
+                    answerText.textContent = "";
+                    showAnswerBtn.classList.add('btn-disabled');
+                    flashcard.classList.remove('flipped');
+                } else {
+                    const currentCard = flashcards[currentCardIndex];
+                    questionText.textContent = currentCard.question;
+                    answerText.textContent = currentCard.answer;
+                    showAnswerBtn.classList.remove('btn-disabled');
+                    flashcard.classList.remove('flipped');
+                }
+                updateControls();
+            }
+
+            /**
+             * Updates the card counter and navigation button states.
+             */
+            function updateControls() {
+                totalCardsNumSpan.textContent = flashcards.length;
+                if (flashcards.length > 0) {
+                    currentCardNumSpan.textContent = currentCardIndex + 1;
+                    prevCardBtn.classList.remove('btn-disabled');
+                    nextCardBtn.classList.remove('btn-disabled');
+                    showAnswerBtn.classList.remove('btn-disabled');
+                    deleteCurrentCardBtn.classList.remove('btn-disabled');
+                } else {
+                    currentCardNumSpan.textContent = 0;
+                    prevCardBtn.classList.add('btn-disabled');
+                    nextCardBtn.classList.add('btn-disabled');
+                    showAnswerBtn.classList.add('btn-disabled');
+                    deleteCurrentCardBtn.classList.add('btn-disabled');
+                }
+                if (currentCardIndex === 0) {
+                    prevCardBtn.classList.add('btn-disabled');
+                }
+                if (currentCardIndex === flashcards.length - 1) {
+                    nextCardBtn.classList.add('btn-disabled');
+                }
+            }
+
+            /**
+             * Flips the flashcard to show the answer.
+             */
+            function toggleAnswer() {
+                if (flashcards.length === 0) return;
+                flashcard.classList.toggle('flipped');
+            }
+
+            /**
+             * Moves to the next flashcard.
+             */
+            function nextCard() {
+                if (currentCardIndex < flashcards.length - 1) {
+                    currentCardIndex++;
+                    displayFlashcard();
+                }
+            }
+
+            /**
+             * Moves to the previous flashcard.
+             */
+            function prevCard() {
+                if (currentCardIndex > 0) {
+                    currentCardIndex--;
+                    displayFlashcard();
+                }
+            }
+
+            /**
+             * Adds a new flashcard from input fields.
+             */
+            function addFlashcard() {
+                const question = newQuestionInput.value.trim();
+                const answer = newAnswerInput.value.trim();
+
+                if (!question || !answer) {
+                    addMessage.textContent = "Please fill in both question and answer fields.";
+                    addMessage.style.display = 'block';
+                    addMessage.style.color = errorColor;
+                    return;
+                }
+
+                flashcards.push({ question, answer });
+                saveFlashcards();
+                newQuestionInput.value = '';
+                newAnswerInput.value = '';
+                addMessage.textContent = "Flashcard added!";
+                addMessage.style.display = 'block';
+                addMessage.style.color = successColor;
+
+                currentCardIndex = flashcards.length - 1;
+                displayFlashcard();
+                updateControls();
+
+                setTimeout(() => {
+                    addMessage.style.display = 'none';
+                }, 3000);
+            }
+
+            /**
+             * Deletes the currently displayed flashcard.
+             */
+            function deleteCurrentFlashcard() {
+                if (flashcards.length === 0) {
+                    addMessage.textContent = "No flashcard to delete.";
+                    addMessage.style.display = 'block';
+                    addMessage.style.color = errorColor;
+                    return;
+                }
+
+                flashcards.splice(currentCardIndex, 1);
+                saveFlashcards();
+
+                if (flashcards.length === 0) {
+                    currentCardIndex = 0;
+                } else if (currentCardIndex >= flashcards.length) {
+                    currentCardIndex = flashcards.length - 1;
+                }
+                displayFlashcard();
+                updateControls();
+                addMessage.textContent = "Flashcard deleted!";
+                addMessage.style.display = 'block';
+                addMessage.style.color = errorColor;
+                setTimeout(() => {
+                    addMessage.style.display = 'none';
+                }, 3000);
+            }
+
+            /**
+             * Clears the input fields in the "Add New Flashcard" section.
+             */
+            function prepareForNewCard() {
+                newQuestionInput.value = '';
+                newAnswerInput.value = '';
+                addMessage.style.display = 'none'; // Hide any previous messages
+                newQuestionInput.focus(); // Focus on the question input for quick entry
+            }
+
+            // --- Event Listeners ---
+            showAnswerBtn.addEventListener('click', toggleAnswer);
+            prevCardBtn.addEventListener('click', prevCard);
+            nextCardBtn.addEventListener('click', nextCard);
+            addCardBtn.addEventListener('click', addFlashcard);
+            deleteCurrentCardBtn.addEventListener('click', deleteCurrentFlashcard);
+            letsBeginBtn.addEventListener('click', showMainContent);
+            newCardQuickAddBtn.addEventListener('click', prepareForNewCard); // Event listener for the new button
+
+            // --- Initial Setup ---
+            loadFlashcards();
+        });
+    </script>
+</body>
+</html>
